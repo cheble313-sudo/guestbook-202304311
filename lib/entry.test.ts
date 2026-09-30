@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { parseMessage, parseNewEntry } from "./entry.ts";
+import { parseEntryId, parseMessage, parseNewEntry } from "./entry.ts";
 import { hashPassword, verifyPassword } from "./password.ts";
 
 describe("parseNewEntry", () => {
@@ -42,6 +42,16 @@ describe("parseMessage", () => {
   });
 });
 
+describe("parseEntryId", () => {
+  it("양의 정수 문자열은 숫자로 바꾼다", () => {
+    assert.equal(parseEntryId("12"), 12);
+  });
+
+  it("숫자가 아니거나 범위를 벗어나면 null", () => {
+    for (const raw of ["abc", "0", "-1", "1.5", "", "99999999999"]) assert.equal(parseEntryId(raw), null, raw);
+  });
+});
+
 describe("password", () => {
   it("맞는 비밀번호는 통과, 틀린 비밀번호는 거부", () => {
     const hash = hashPassword("secret");
@@ -52,6 +62,10 @@ describe("password", () => {
 
   it("같은 비밀번호도 매번 다른 해시가 된다", () => {
     assert.notEqual(hashPassword("secret"), hashPassword("secret"));
+  });
+
+  it("너무 긴 비밀번호는 해시 계산 없이 거부", () => {
+    assert.equal(verifyPassword("a".repeat(51), hashPassword("secret")), false);
   });
 
   it("형식이 깨진 해시는 거부", () => {

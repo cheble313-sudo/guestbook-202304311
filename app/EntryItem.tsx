@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Entry } from "@/lib/db";
 import { LIMITS } from "@/lib/entry";
+import { sendJson } from "./sendJson";
 import { inputClass } from "./styles";
 
 function formatKst(iso: string) {
@@ -29,13 +30,12 @@ export default function EntryItem({ entry }: { entry: Entry }) {
     e.preventDefault();
     setPending(true);
     setError("");
-    const res = await fetch(`/api/entries/${entry.id}`, {
-      method: mode === "edit" ? "PATCH" : "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(mode === "edit" ? { password, message } : { password }),
-    });
+    const failure =
+      mode === "edit"
+        ? await sendJson(`/api/entries/${entry.id}`, "PATCH", { password, message })
+        : await sendJson(`/api/entries/${entry.id}`, "DELETE", { password });
     setPending(false);
-    if (!res.ok) return setError((await res.json()).error);
+    if (failure) return setError(failure);
     setMode("view");
     router.refresh();
   }

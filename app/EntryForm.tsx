@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LIMITS } from "@/lib/entry";
+import { sendJson } from "./sendJson";
 import { inputClass } from "./styles";
 
 export default function EntryForm() {
@@ -17,13 +18,9 @@ export default function EntryForm() {
     e.preventDefault();
     setPending(true);
     setError("");
-    const res = await fetch("/api/entries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, message, password }),
-    });
+    const failure = await sendJson("/api/entries", "POST", { name, message, password });
     setPending(false);
-    if (!res.ok) return setError((await res.json()).error);
+    if (failure) return setError(failure);
     setMessage("");
     setPassword("");
     router.refresh();

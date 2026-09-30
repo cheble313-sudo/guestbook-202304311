@@ -18,6 +18,13 @@ export function parseMessage(input: unknown): Result<{ message: string }> {
   return error ? { ok: false, error } : { ok: true, message };
 }
 
+// URL의 [id]를 DB의 serial(int4) 범위 안의 양의 정수로만 받는다
+export function parseEntryId(raw: string): number | null {
+  if (!/^\d+$/.test(raw)) return null;
+  const id = Number(raw);
+  return id >= 1 && id <= 2147483647 ? id : null;
+}
+
 export type NewEntry = { name: string; message: string; password: string };
 
 export function parseNewEntry(input: {

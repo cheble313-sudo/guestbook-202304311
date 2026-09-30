@@ -1,5 +1,6 @@
 import { deleteEntry, updateMessage, type OwnerCheck } from "@/lib/db";
-import { parseMessage } from "@/lib/entry";
+import { parseEntryId, parseMessage } from "@/lib/entry";
+import { readJsonBody } from "../readJsonBody";
 
 function reject(check: Exclude<OwnerCheck, "ok">) {
   return check === "not_found"
@@ -8,18 +9,20 @@ function reject(check: Exclude<OwnerCheck, "ok">) {
 }
 
 export async function PATCH(request: Request, ctx: RouteContext<"/api/entries/[id]">) {
-  const { id } = await ctx.params;
-  const body = await request.json().catch(() => ({}));
+  const id = parseEntryId((await ctx.params).id);
+  if (id === null) return reject("not_found");
+  const body = await readJsonBody(request);
   const parsed = parseMessage(body.message);
   if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 });
 
-  const check = await updateMessage(Number(id), String(body.password ?? ""), parsed.message);
+  const check = await updateMessage(id, String(body.password ?? ""), parsed.message);
   return check === "ok" ? Response.json({ ok: true }) : reject(check);
 }
 
 export async function DELETE(request: Request, ctx: RouteContext<"/api/entries/[id]">) {
-  const { id } = await ctx.params;
-  const body = await request.json().catch(() => ({}));
-  const check = await deleteEntry(Number(id), String(body.password ?? ""));
+  const id = parseEntryId((await ctx.params).id);
+  if (id === null) return reject("not_found");
+  const body = await readJsonBody(request);
+  const check = await deleteEntry(id, String(body.password ?? ""));
   return check === "ok" ? Response.json({ ok: true }) : reject(check);
 }
